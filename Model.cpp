@@ -1,0 +1,384 @@
+#include "Model.h"
+
+Model::Model() {
+
+}
+
+Model::Model(Parameters *paramObj, ModelFormParameters *modelParamObj) {
+
+    m_modelParamsPtr = modelParamObj;
+    m_paramsPtr = paramObj;
+    // Set Growth Form
+   QString growthFormStr = m_modelParamsPtr->getGrowthForm();
+   if (growthFormStr == "LOGISTIC") {
+       GrowthModuleLogistic* growthModule = new GrowthModuleLogistic(m_paramsPtr, m_modelParamsPtr);
+       m_growthFormPtr = growthModule;
+   } else if (growthFormStr == "LINEAR") {
+       GrowthModuleLinear* growthModule = new GrowthModuleLinear(m_paramsPtr, m_modelParamsPtr);
+       m_growthFormPtr = growthModule;
+   } else {
+//       qDebug() << "GrowthForm = UNKNOWN";
+   }
+   m_ModelComponentList.append(m_growthFormPtr);
+
+
+   // Set within group/between species competition growth form
+   QString competitionWithinGroupStr = m_modelParamsPtr->getwgcForm();
+   if (competitionWithinGroupStr == "MS-PROD") {
+       CompetitionModuleWithinGroup* competitionModule = new CompetitionModuleWithinGroup(m_paramsPtr, m_modelParamsPtr);
+       m_competitionWithinGroupFormPtr = competitionModule;
+       m_ModelComponentList.append(m_competitionWithinGroupFormPtr);
+   } else if (competitionWithinGroupStr == "NO_K") {
+       CompetitionModuleBetweenSpeciesNoK* competitionModule = new CompetitionModuleBetweenSpeciesNoK(m_paramsPtr, m_modelParamsPtr);
+       m_competitionWithinGroupFormPtr = competitionModule;
+       m_ModelComponentList.append(m_competitionWithinGroupFormPtr);
+   } else {
+//       qDebug() << "Competition Between Species Form = UNKNOWN";
+   }
+
+   QString competitionBetweenGroupStr = m_modelParamsPtr->getbgcForm();
+   if (competitionBetweenGroupStr == "MS-PROD") {
+       CompetitionModuleBetweenGroup* competitionModuleBetweenGroup = new CompetitionModuleBetweenGroup(m_paramsPtr, m_modelParamsPtr);
+       m_competitionBetweenGroupFormPtr = competitionModuleBetweenGroup;
+       m_ModelComponentList.append(m_competitionBetweenGroupFormPtr);
+   } else {
+//       qDebug() << "Competition Between Group Form = UNKNOWN";
+   }
+
+   // Set Predation Form
+   QString predationFormStr = m_modelParamsPtr->getPredationForm();
+   if (predationFormStr == "TYPE I") {
+       PredationModuleTypeI* predationModule = new PredationModuleTypeI(m_paramsPtr, m_modelParamsPtr);
+       m_predationFormPtr = predationModule;
+       m_ModelComponentList.append(m_predationFormPtr);
+   } else if (predationFormStr == "TYPE II") {
+       PredationModuleTypeII* predationModule = new PredationModuleTypeII(m_paramsPtr, m_modelParamsPtr);
+       m_predationFormPtr = predationModule;
+       m_ModelComponentList.append(m_predationFormPtr);
+   } else if (predationFormStr == "TYPE III") {
+       PredationModuleTypeIII* predationModule = new PredationModuleTypeIII(m_paramsPtr, m_modelParamsPtr);
+       m_predationFormPtr = predationModule;
+       m_ModelComponentList.append(m_predationFormPtr);
+   } else {
+ //      qDebug() << "PredationForm = UNKNOWN";
+   }
+
+
+   // Set Harvest Form
+   QString harvestFormStr = m_modelParamsPtr->getHarvestForm();
+   if (harvestFormStr == "H") {
+       HarvestModuleExploitRate* harvestModule = new HarvestModuleExploitRate(m_paramsPtr, m_modelParamsPtr);
+       m_harvestFormPtr = harvestModule;
+       m_ModelComponentList.append(m_harvestFormPtr);
+   } else if (harvestFormStr == "QE") {
+       HarvestModuleEffortQ* harvestModule = new HarvestModuleEffortQ(m_paramsPtr, m_modelParamsPtr);
+       m_harvestFormPtr = harvestModule;
+       m_ModelComponentList.append(m_harvestFormPtr);
+   } else if (harvestFormStr == "CATCH") {
+       HarvestModuleCatch* harvestModule = new HarvestModuleCatch(m_paramsPtr, m_modelParamsPtr);
+       m_harvestFormPtr = harvestModule;
+       m_ModelComponentList.append(m_harvestFormPtr);
+   } else {
+//       qDebug() << "HarvestModule = UNKNOWN";
+   }
+
+    // Set AssessmentModule
+   QString assessmentModuleStr = m_modelParamsPtr->getAssessmentType();
+//   qDebug() << "Assessment type = " << assessmentModuleStr;
+   if (assessmentModuleStr == "PERFECT KNOWLEDGE") {
+       qDebug() << "Assigning as PERFECT KNOWLEDGE";
+//       AssessmentModulePerfectKnowledge* assessmentModule = new AssessmentModulePerfectKnowledge();
+       QSharedPointer<AssessmentModulePerfectKnowledge> assessmentModule = QSharedPointer<AssessmentModulePerfectKnowledge>(new AssessmentModulePerfectKnowledge(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "PERFECT KNOWLEDGE LOWEST EFFORT") {
+       qDebug() << "Assigning as PERFECT KNOWLEDGE LOWEST EFFORT";
+//       AssessmentModulePerfectKnowledgeLowestEffort* assessmentModule = new AssessmentModulePerfectKnowledgeLowestEffort();
+       QSharedPointer<AssessmentModulePerfectKnowledgeLowestEffort> assessmentModule = QSharedPointer<AssessmentModulePerfectKnowledgeLowestEffort>(new AssessmentModulePerfectKnowledgeLowestEffort(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "AVERAGE TOTAL CATCH") {
+       qDebug() << "Assigning as AVERAGE TOTAL CATCH";
+//       AssessmentModuleAverageTotalCatch* assessmentModule = new AssessmentModuleAverageTotalCatch();
+       QSharedPointer<AssessmentModuleAverageTotalCatch> assessmentModule = QSharedPointer<AssessmentModuleAverageTotalCatch>(new AssessmentModuleAverageTotalCatch(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "AVERAGE CATCH INDICATOR SPECIES") {
+       qDebug() << "Assigning as AVERAGE CATCH INDICATOR SPECIES";
+//       AssessmentModuleAverageCatchIndicatorSpecies* assessmentModule = new AssessmentModuleAverageCatchIndicatorSpecies();
+       QSharedPointer<AssessmentModuleAverageCatchIndicatorSpecies> assessmentModule = QSharedPointer<AssessmentModuleAverageCatchIndicatorSpecies>(new AssessmentModuleAverageCatchIndicatorSpecies(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "ASSESSMENT SETS ACL") {
+//       AssessmentModuleAssessmentSetsACL* assessmentModule = new AssessmentModuleAssessmentSetsACL(m_modelParamsPtr);
+       QSharedPointer<AssessmentModuleAssessmentSetsACL> assessmentModule = QSharedPointer<AssessmentModuleAssessmentSetsACL>(new AssessmentModuleAssessmentSetsACL(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "STOCK COMPLEX AS SINGLE STOCK"){
+       QSharedPointer<AssessmentModuleStockComplexAsSingleStock> assessmentModule = QSharedPointer<AssessmentModuleStockComplexAsSingleStock>(new AssessmentModuleStockComplexAsSingleStock(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else {
+//       AssessmentModuleNull* assessmentModule = new AssessmentModuleNull();
+       QSharedPointer<AssessmentModuleNull> assessmentModule = QSharedPointer<AssessmentModuleNull>(new AssessmentModuleNull);
+       m_assessmentModulePtr = assessmentModule;
+   }
+}
+
+Model::~Model() {
+    ModelComponent* component;
+    foreach (component, m_ModelComponentList) {
+        delete component;
+    }
+}
+
+
+void Model::initializeModel() {
+
+    // Set Growth Form
+   QString growthFormStr = m_modelParamsPtr->getGrowthForm();
+   if (growthFormStr == "LOGISTIC") {
+       GrowthModuleLogistic* growthModule = new GrowthModuleLogistic(m_paramsPtr, m_modelParamsPtr);
+       m_growthFormPtr = growthModule;
+   } else if (growthFormStr == "LINEAR") {
+       GrowthModuleLinear* growthModule = new GrowthModuleLinear(m_paramsPtr, m_modelParamsPtr);
+       m_growthFormPtr = growthModule;
+   } else {
+//       qDebug() << "GrowthForm = UNKNOWN";
+   }
+   m_ModelComponentList.append(m_growthFormPtr);
+
+
+   // Set within group/between species competition growth form
+   QString competitionWithinGroupStr = m_modelParamsPtr->getwgcForm();
+   if (competitionWithinGroupStr == "MS-PROD") {
+       CompetitionModuleWithinGroup* competitionModule = new CompetitionModuleWithinGroup(m_paramsPtr, m_modelParamsPtr);
+       m_competitionWithinGroupFormPtr = competitionModule;
+       m_ModelComponentList.append(m_competitionWithinGroupFormPtr);
+   } else if (competitionWithinGroupStr == "NO_K") {
+       CompetitionModuleBetweenSpeciesNoK* competitionModule = new CompetitionModuleBetweenSpeciesNoK(m_paramsPtr, m_modelParamsPtr);
+       m_competitionWithinGroupFormPtr = competitionModule;
+       m_ModelComponentList.append(m_competitionWithinGroupFormPtr);
+   } else {
+//       qDebug() << "Competition Between Species Form = UNKNOWN";
+   }
+
+   QString competitionBetweenGroupStr = m_modelParamsPtr->getbgcForm();
+   if (competitionBetweenGroupStr == "MS-PROD") {
+       CompetitionModuleBetweenGroup* competitionModuleBetweenGroup = new CompetitionModuleBetweenGroup(m_paramsPtr, m_modelParamsPtr);
+       m_competitionBetweenGroupFormPtr = competitionModuleBetweenGroup;
+       m_ModelComponentList.append(m_competitionBetweenGroupFormPtr);
+   } else {
+//       qDebug() << "Competition Between Group Form = UNKNOWN";
+   }
+
+   // Set Predation Form
+   QString predationFormStr = m_modelParamsPtr->getPredationForm();
+   if (predationFormStr == "TYPE I") {
+       PredationModuleTypeI* predationModule = new PredationModuleTypeI(m_paramsPtr, m_modelParamsPtr);
+       m_predationFormPtr = predationModule;
+       m_ModelComponentList.append(m_predationFormPtr);
+   } else if (predationFormStr == "TYPE II") {
+       PredationModuleTypeII* predationModule = new PredationModuleTypeII(m_paramsPtr, m_modelParamsPtr);
+       m_predationFormPtr = predationModule;
+       m_ModelComponentList.append(m_predationFormPtr);
+   } else if (predationFormStr == "TYPE III") {
+       PredationModuleTypeIII* predationModule = new PredationModuleTypeIII(m_paramsPtr, m_modelParamsPtr);
+       m_predationFormPtr = predationModule;
+       m_ModelComponentList.append(m_predationFormPtr);
+   } else {
+ //      qDebug() << "PredationForm = UNKNOWN";
+   }
+
+
+   // Set Harvest Form
+   QString harvestFormStr = m_modelParamsPtr->getHarvestForm();
+   if (harvestFormStr == "H") {
+       HarvestModuleExploitRate* harvestModule = new HarvestModuleExploitRate(m_paramsPtr, m_modelParamsPtr);
+       m_harvestFormPtr = harvestModule;
+       m_ModelComponentList.append(m_harvestFormPtr);
+   } else if (harvestFormStr == "QE") {
+       HarvestModuleEffortQ* harvestModule = new HarvestModuleEffortQ(m_paramsPtr, m_modelParamsPtr);
+       m_harvestFormPtr = harvestModule;
+       m_ModelComponentList.append(m_harvestFormPtr);
+   } else if (harvestFormStr == "CATCH") {
+       HarvestModuleCatch* harvestModule = new HarvestModuleCatch(m_paramsPtr, m_modelParamsPtr);
+       m_harvestFormPtr = harvestModule;
+       m_ModelComponentList.append(m_harvestFormPtr);
+   } else {
+//       qDebug() << "HarvestModule = UNKNOWN";
+   }
+
+    // Set AssessmentModule
+   QString assessmentModuleStr = m_modelParamsPtr->getAssessmentType();
+//   qDebug() << "Assessment type = " << assessmentModuleStr;
+   if (assessmentModuleStr == "PERFECT KNOWLEDGE") {
+       qDebug() << "Assigning as PERFECT KNOWLEDGE";
+//       AssessmentModulePerfectKnowledge* assessmentModule = new AssessmentModulePerfectKnowledge();
+       QSharedPointer<AssessmentModulePerfectKnowledge> assessmentModule = QSharedPointer<AssessmentModulePerfectKnowledge>(new AssessmentModulePerfectKnowledge(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "PERFECT KNOWLEDGE LOWEST EFFORT") {
+       qDebug() << "Assigning as PERFECT KNOWLEDGE LOWEST EFFORT";
+//       AssessmentModulePerfectKnowledgeLowestEffort* assessmentModule = new AssessmentModulePerfectKnowledgeLowestEffort();
+       QSharedPointer<AssessmentModulePerfectKnowledgeLowestEffort> assessmentModule = QSharedPointer<AssessmentModulePerfectKnowledgeLowestEffort>(new AssessmentModulePerfectKnowledgeLowestEffort(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "AVERAGE TOTAL CATCH") {
+       qDebug() << "Assigning as AVERAGE TOTAL CATCH";
+//       AssessmentModuleAverageTotalCatch* assessmentModule = new AssessmentModuleAverageTotalCatch();
+       QSharedPointer<AssessmentModuleAverageTotalCatch> assessmentModule = QSharedPointer<AssessmentModuleAverageTotalCatch>(new AssessmentModuleAverageTotalCatch(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "AVERAGE CATCH INDICATOR SPECIES") {
+       qDebug() << "Assigning as AVERAGE CATCH INDICATOR SPECIES";
+//       AssessmentModuleAverageCatchIndicatorSpecies* assessmentModule = new AssessmentModuleAverageCatchIndicatorSpecies();
+       QSharedPointer<AssessmentModuleAverageCatchIndicatorSpecies> assessmentModule = QSharedPointer<AssessmentModuleAverageCatchIndicatorSpecies>(new AssessmentModuleAverageCatchIndicatorSpecies(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "ASSESSMENT SETS ACL") {
+//       AssessmentModuleAssessmentSetsACL* assessmentModule = new AssessmentModuleAssessmentSetsACL(m_modelParamsPtr);
+       QSharedPointer<AssessmentModuleAssessmentSetsACL> assessmentModule = QSharedPointer<AssessmentModuleAssessmentSetsACL>(new AssessmentModuleAssessmentSetsACL(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else if (assessmentModuleStr == "STOCK COMPLEX AS SINGLE STOCK"){
+       QSharedPointer<AssessmentModuleStockComplexAsSingleStock> assessmentModule = QSharedPointer<AssessmentModuleStockComplexAsSingleStock>(new AssessmentModuleStockComplexAsSingleStock(m_modelParamsPtr));
+       m_assessmentModulePtr = assessmentModule;
+   } else {
+//       AssessmentModuleNull* assessmentModule = new AssessmentModuleNull();
+       QSharedPointer<AssessmentModuleNull> assessmentModule = QSharedPointer<AssessmentModuleNull>(new AssessmentModuleNull);
+       m_assessmentModulePtr = assessmentModule;
+   }
+
+}
+
+void Model::initializeModel(Parameters *paramObj) {
+
+    m_paramsPtr = paramObj;
+}
+
+
+void Model::runModel() {
+
+    int numRuns = m_modelParamsPtr->getNumRuns();
+    if (m_paramsPtr->getOutputType() == "STOCHASTIC") {
+//    if (numRuns > 1) {
+        m_paramsPtr->initializeStochasticOutputFiles();
+    }
+
+    int runLength = m_modelParamsPtr->getRunLength();
+//    qDebug() << "Run length: " << runLength;
+    int historicalEnd = m_modelParamsPtr->getHistoricalEnd();
+//    qDebug() << "Historical End: " << historicalEnd;
+    int timeStep = m_modelParamsPtr->getTimeStep();
+//    qDebug() << "Time Step: " << timeStep;
+    ModelComponent* component;
+    QString componentName = "";
+    QString outputName = "";
+    int numSpecies = m_paramsPtr->getNumberOfSpecies();
+//    qDebug() << "Number of species" << numSpecies;
+//    initializeModel();
+//    qDebug() << "Initialized model";
+//    m_paramsPtr->initializeListsAndTS(0);
+
+    for (int runNumber = 1; runNumber <= numRuns; runNumber++) {
+        // for every time step
+
+        qDebug() << "Run: " << runNumber;
+        double dN_fromModelComponentValue = 0.0;
+        m_paramsPtr->initializeListsAndTS(0);
+//        m_paramsPtr->setGuildBiomass(0);
+        qDebug() << "After Initializing Lists and TS";
+        for (int time = 0; time <= historicalEnd-1; time += timeStep) {
+            qDebug() << "Time Step: " << time;
+            // add up the results of every component in the model by
+            qDebug() << "Num Species: " << numSpecies;
+            for (int speciesIndex = 0; speciesIndex < numSpecies; speciesIndex++) {
+                double dN = 0.0;
+                foreach (component, m_ModelComponentList) {
+                    qDebug() << "1";
+                    componentName = component->getComponentName();
+                    qDebug() << "2";
+                    outputName = component->getOutputName();
+                    qDebug() << "3 - Output Name: " << outputName;
+                    dN_fromModelComponentValue = component->getModelComponentValue(m_paramsPtr, speciesIndex, time);
+                    qDebug() << "4";
+
+                    // Modify this so that each model component updates the appropriate lists...
+                    component->updateLosses(speciesIndex, dN_fromModelComponentValue);
+                    qDebug() << "5";
+                    dN += dN_fromModelComponentValue;
+                    qDebug() << "6";
+                }
+                qDebug() << "speciesIndex: " << speciesIndex << "; time: " << time << "dN:" << dN;
+                m_paramsPtr->updateBiomass(speciesIndex, time, dN);
+                qDebug() << "Species: " << speciesIndex << " :: r = " << m_paramsPtr->getGrowthRate(speciesIndex) << " :: a = " << m_paramsPtr->getWithinGuildCompParam(speciesIndex, speciesIndex);
+            }
+            m_paramsPtr->setGuildBiomass(time);
+        }
+        if (!(historicalEnd == runLength)) {
+            for (int time = historicalEnd; time <= runLength-1; time += timeStep) {
+              m_paramsPtr->setStochasticGrowthList();
+                // add up the results of every component in the model by
+                m_assessmentModulePtr->assess(m_paramsPtr, time);
+                for (int speciesIndex = 0; speciesIndex < numSpecies; speciesIndex++) {
+                    double dN = 0.0;
+
+                     foreach (component, m_ModelComponentList) {
+                        componentName = component->getComponentName();
+                        outputName = component->getOutputName();
+//                        qDebug() << "Time Step: " << time << "; Component Name: " << componentName;
+                        dN_fromModelComponentValue = component->getModelComponentValue(m_paramsPtr, speciesIndex, time);
+//                        qDebug() << time << " : " << speciesIndex << componentName << " dN : " << dN_fromModelComponentValue;
+
+                        // Modify this so that each model component updates the appropriate lists...
+                        component->updateLosses(speciesIndex, dN_fromModelComponentValue);
+                        dN += dN_fromModelComponentValue;
+                    }
+                    m_paramsPtr->updateBiomass(speciesIndex, time, dN);
+                }
+                m_paramsPtr->setGuildBiomass(time);
+            }
+        }
+        if (m_paramsPtr->getOutputType() == "SINGLE RUN") {
+            qDebug() << "Trying to Output";
+            m_paramsPtr->outputResults(m_ModelComponentList);
+            qDebug() << "Finished Output";
+        } else if (m_paramsPtr->getOutputType() == "STOCHASTIC") {
+            m_paramsPtr->outputStochasticResults(runNumber);
+        } else if (m_paramsPtr->getOutputType() == "SKILL ASSESSMENT") {
+            m_paramsPtr->outputSkillAssessmentResults();
+        }
+    }
+}
+
+
+void Model::runModel_noOutput() {
+
+    // for every time step
+    int runLength = m_modelParamsPtr->getRunLength();
+    int timeStep = m_modelParamsPtr->getTimeStep();
+    ModelComponent* component;
+    QString componentName = "";
+    QString outputName = "";
+    double dN_fromModelComponentValue = 0.0;
+    int numSpecies = m_paramsPtr->getNumberOfSpecies();
+//    initializeModel();
+//    m_paramsPtr->clearOutputCatchMatrix();
+
+    foreach (component, m_ModelComponentList) {
+        component->setNoOutput();
+    }
+
+    for (int time = 0; time <= runLength-1; time += timeStep) {
+
+        // add up the results of every component in the model by
+        for (int speciesIndex = 0; speciesIndex < numSpecies; speciesIndex++) {
+            double dN = 0.0;
+            foreach (component, m_ModelComponentList) {
+                componentName = component->getComponentName();
+                outputName = component->getOutputName();
+
+//                qDebug() << time << " : " << speciesIndex << componentName;
+                dN_fromModelComponentValue = component->getModelComponentValue(m_paramsPtr, speciesIndex, time);
+//                qDebug() << time << " : " << speciesIndex << componentName << " dN : " << dN_fromModelComponentValue;
+                dN += dN_fromModelComponentValue;
+            }
+            m_paramsPtr->updateBiomass(speciesIndex, time, dN);
+        }
+    }
+
+        // calculating the change to the old biomass, using a 4th order runge kutta method
+        // adding the change to the old biomass
+        // which becomes the new biomass
+
+}
